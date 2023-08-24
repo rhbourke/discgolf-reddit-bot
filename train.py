@@ -10,6 +10,4 @@ model = DecisionTreeClassifier()
 model.fit(X, y)
 
 joblib.dump(model, "model.joblib")
-predictions = model.predict(X)
-print(predictions)
 
