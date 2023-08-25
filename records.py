@@ -1,4 +1,3 @@
-import joblib
 class Logbook:
     def __init__(self):
         self.log = []
@@ -27,6 +26,3 @@ class Logbook:
         self.total_post_count += 1
         if(is_ace_post == 1):
             self.ace_post_count += 1
-#To create a logbook:
-#new_logbook = Logbook()
-#joblib.dump(new_logbook, "logbook.joblib")
