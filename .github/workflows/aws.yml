@@ -48,6 +48,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Add secrets to praw.ini
+      uses: DamianReeves/write-file-action@master
+      with:
+        path: praw.ini
+        contents: ${{secrets.PRAW_SECRETS}}
+        write-mode: append
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
