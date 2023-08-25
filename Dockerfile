@@ -6,7 +6,7 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 # Copy function code
 COPY lambda_function.py ${LAMBDA_TASK_ROOT}
 
-COPY logbook.joblib ${LAMBDA_TASK_ROOT}
+COPY recordsBook.joblib ${LAMBDA_TASK_ROOT}
 
 COPY model.joblib ${LAMBDA_TASK_ROOT}
 

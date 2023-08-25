@@ -20,7 +20,7 @@ def lambda_handler(event, context):
 
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
-    for submission in subreddit.new(limit=100):
+    for submission in subreddit.new(limit=10):
         if(submission.created_utc <= recordsBook.last_post_time):
             break
         print("Processing post with title: ", submission.title)
@@ -77,3 +77,7 @@ def lambda_handler(event, context):
 
     reddit.inbox.mark_all_read()
     joblib.dump(recordsBook, "records.joblib")
+
+
+if __name__ == "__main__":
+    lambda_handler(None, None)

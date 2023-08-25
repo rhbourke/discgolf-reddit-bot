@@ -1,4 +1,4 @@
-class Logbook:
+class RecordsBook:
     def __init__(self):
         self.log = []
         self.total_post_count = 0
