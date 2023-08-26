@@ -20,7 +20,7 @@ def lambda_handler(event, context):
 
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
-    for submission in subreddit.new(limit=10):
+    for submission in subreddit.new(limit=1):
         if(submission.created_utc <= recordsBook.last_post_time):
             break
         print("Processing post with title: ", submission.title)
