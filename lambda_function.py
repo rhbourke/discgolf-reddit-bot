@@ -18,17 +18,22 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3')
     bucket_name = "redditdiscgolfbotstorage"
     records_key = "records.joblib"
-    with BytesIO() as data:
-        s3.download_fileobj(bucket_name, records_key, data)
-        data.seek(0)
-        recordsBook = joblib.load(data)
-    print("Loaded records book from S3.")
+    
+    try:
+        with BytesIO() as data:
+            s3.download_fileobj(bucket_name, records_key, data)
+            data.seek(0)
+            recordsBook = joblib.load(data)
+        print("Loaded records book from S3.")
+    except:
+        recordsBook = records.RecordsBook()
+        print("Created new records book.")
 
 
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
 
-    for submission in subreddit.new(limit=20):
+    for submission in subreddit.new(limit=1):
         if(submission.created_utc <= recordsBook.last_post_time):
             break
         print("Processing post with title: ", submission.title)
@@ -65,7 +70,7 @@ def lambda_handler(event, context):
             print("Replied to post with title: ", submission.title)
             recordsBook.add_message(f"Found ace post! Replied to post with title: {submission.title} on {datetime.datetime.now()}")
         recordsBook.add_post_to_data(category)
-        
+
     for submission in subreddit.new(limit=1):
         recordsBook.set_last_post_time(submission.created_utc)
 
