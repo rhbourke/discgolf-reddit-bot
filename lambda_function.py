@@ -14,11 +14,10 @@ def lambda_handler(event, context):
         
     model = joblib.load("model.joblib")
 
+    #Load data from past runs from AWS S3
     s3 = boto3.client('s3')
     bucket_name = "redditdiscgolfbotstorage"
     records_key = "records.joblib"
-
-
     s3.download_file(bucket_name, records_key, "/tmp/records_file")
     recordsBook = joblib.load("/tmp/records_file")
     print("Loaded records book from S3.")
@@ -26,8 +25,8 @@ def lambda_handler(event, context):
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
 
-    for submission in subreddit.new(limit=1):
-        if(submission.created_utc <= recordsBook.last_post_time):
+    for submission in subreddit.new(limit=20):
+        if(submission.created_utc <= recordsBook.last_post_time): #We only want to process posts that were created after the last time we ran the bot
             break
         print("Processing post with title: ", submission.title)
         post_values = {
@@ -37,7 +36,7 @@ def lambda_handler(event, context):
             "Question In Self Text": 0,
             "Tagged As Ace": 0
         }
-        if(("ace" or "hole in one") in submission.title.lower() and ("place" or "race" not in submission.title.lower())): #Since the string "ace" is in the words "place" and "race" I decided just to throw them out. This isn't perfect, but it will work for our purposes
+        if(("ace" or "hole in one") in submission.title.lower() and ("place" or "race" not in submission.title.lower())): #Since the string "ace" is in the common words "place" and "race" I decided just to throw them out. This isn't perfect, but it will work for our purposes
             print("Title contains ace")
             post_values["Ace In Title"] = 1
 
@@ -56,15 +55,18 @@ def lambda_handler(event, context):
         if("Ace" == submission.link_flair_text):
             print("Tagged as Ace\n")
             post_values["Tagged As Ace"] = 1
+        
         new_data = numpy.array([post_values["Ace In Title"], post_values["Ace In Self Text"], post_values["Question In Title"], post_values["Question In Self Text"], post_values["Tagged As Ace"]]).reshape(1, -1)
         category = model.predict(new_data)
+        
         if(category == 1):
             submission.reply('Congratulations on your ace!\n\nI am a bot, and this comment was made automatically. To view some basic statistics I have collected, reply to this comment with "!stats". To learn more about me, reply to this comment with "!info". If this post was not made to celebrate an ace, please reply to this comment with "bad bot".')
             print("Replied to post with title: ", submission.title)
             recordsBook.add_message(f"Found ace post! Replied to post with title: {submission.title} on {datetime.datetime.now()}")
         recordsBook.add_post_to_data(category)
 
-    for submission in subreddit.new(limit=1):
+    for submission in subreddit.new(limit=1): #After processing all the posts, we want to update the last post time to the most recent post
+        #We have a small chance of missing a post if it was made while the program was in the previous loop, but that is fine for my purposes
         recordsBook.set_last_post_time(submission.created_utc)
 
     for reply in reddit.inbox.unread():
