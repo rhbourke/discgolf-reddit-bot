@@ -87,8 +87,8 @@ def lambda_handler(event, context):
 
     reddit.inbox.mark_all_read()
 
-    joblib.dump(recordsBook, "records_file")
-    s3.put_object(Bucket=bucket_name, Key=records_key, Body="records_file")
+    joblib.dump(recordsBook, "/tmp/records_file")
+    s3.put_object(Bucket=bucket_name, Key=records_key, Body="/tmp/records_file")
 
 
 if __name__ == "__main__":
