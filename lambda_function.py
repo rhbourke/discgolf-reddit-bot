@@ -8,14 +8,23 @@ import pandas as pd
 import joblib
 import numpy
 import records
+import boto3
 def lambda_handler(event, context):
+
         
     model = joblib.load("model.joblib")
+    s3 = boto3.client('s3')
+    bucket_name = "redditdiscgolfbotstorage"
+    records_key = "records.joblib"
+
     try:
-        recordsBook = joblib.load("records.joblib")
+       
+        records_file = s3.get_object(Bucket=bucket_name, Key=records_key)
+        recordsBook = joblib.load(records_file)
+        print("Loaded records book from S3.")
     except:
         recordsBook = records.RecordsBook()
-        print("Created new records book")
+        print("Loading records book from S3 failed. Created new records book.")
 
 
     reddit = praw.Reddit("bot")
@@ -76,7 +85,11 @@ def lambda_handler(event, context):
             recordsBook.increment_bad_bot_count()
 
     reddit.inbox.mark_all_read()
-    joblib.dump(recordsBook, "records.joblib")
+    try:
+        s3.put_object(Bucket=bucket_name, Key=records_key, Body=joblib.dumps(recordsBook))
+        print("Saved records book to S3.")
+    except:
+        print("Saving records book to S3 failed.")
 
 
 if __name__ == "__main__":

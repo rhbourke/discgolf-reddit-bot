@@ -8,8 +8,6 @@ COPY lambda_function.py ${LAMBDA_TASK_ROOT}
 
 COPY records.py ${LAMBDA_TASK_ROOT}
 
-COPY records.joblib ${LAMBDA_TASK_ROOT}
-
 COPY model.joblib ${LAMBDA_TASK_ROOT}
 
 COPY praw.ini ${LAMBDA_TASK_ROOT}
