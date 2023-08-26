@@ -9,7 +9,6 @@ import joblib
 import numpy
 import records
 import boto3
-from io import BytesIO
 def lambda_handler(event, context):
 
         
@@ -18,17 +17,11 @@ def lambda_handler(event, context):
     s3 = boto3.client('s3')
     bucket_name = "redditdiscgolfbotstorage"
     records_key = "records.joblib"
-    
-    try:
-        with BytesIO() as data:
-            s3.download_fileobj(bucket_name, records_key, data)
-            data.seek(0)
-            recordsBook = joblib.load(data)
-        print("Loaded records book from S3.")
-    except:
-        recordsBook = records.RecordsBook()
-        print("Created new records book.")
 
+
+    s3.download_file(bucket_name, records_key, "/tmp/records_file")
+    recordsBook = joblib.load("/tmp/records_file")
+    print("Loaded records book from S3.")
 
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
