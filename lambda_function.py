@@ -14,13 +14,10 @@ def lambda_handler(event, context):
 
         
     model = joblib.load("model.joblib")
+
     s3 = boto3.client('s3')
     bucket_name = "redditdiscgolfbotstorage"
     records_key = "records.joblib"
-
-    #records_file = s3.get_object(Bucket=bucket_name, Key=records_key)["Body"].read()
-    #recordsBook = joblib.load(records_file)
-
     with BytesIO() as data:
         s3.download_fileobj(bucket_name, records_key, data)
         data.seek(0)
@@ -30,7 +27,8 @@ def lambda_handler(event, context):
 
     reddit = praw.Reddit("bot")
     subreddit = reddit.subreddit("discgolf")
-    for submission in subreddit.new(limit=1):
+
+    for submission in subreddit.new(limit=20):
         if(submission.created_utc <= recordsBook.last_post_time):
             break
         print("Processing post with title: ", submission.title)
@@ -67,6 +65,7 @@ def lambda_handler(event, context):
             print("Replied to post with title: ", submission.title)
             recordsBook.add_message(f"Found ace post! Replied to post with title: {submission.title} on {datetime.datetime.now()}")
         recordsBook.add_post_to_data(category)
+        
     for submission in subreddit.new(limit=1):
         recordsBook.set_last_post_time(submission.created_utc)
 
@@ -89,6 +88,7 @@ def lambda_handler(event, context):
 
     joblib.dump(recordsBook, "/tmp/records_file")
     s3.put_object(Bucket=bucket_name, Key=records_key, Body="/tmp/records_file")
+    print("Saved records book to S3.")
 
 
 if __name__ == "__main__":
