@@ -1,7 +1,7 @@
-#This script runs the bot
-#It will check the subreddit for new posts and comments
-#If it finds a post that the ml model determines to be an ace, it will reply to it
-#It also checks if users comment !info or !stats on its comments, and replies with further information
+# This script runs the bot
+# It will check the subreddit for new posts and comments
+# If it finds a post that the ml model determines to be an ace, it will reply to it
+# It also checks if users comment !info or !stats on its comments, and replies with further information
 import datetime
 import praw
 import pandas as pd
@@ -14,7 +14,7 @@ def lambda_handler(event, context):
         
     model = joblib.load("model.joblib")
 
-    #Load data from past runs from AWS S3
+    # Load data from past runs from AWS S3
     s3 = boto3.client('s3')
     bucket_name = "redditdiscgolfbotstorage"
     records_key = "records.joblib"
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
     subreddit = reddit.subreddit("discgolf")
 
     for submission in subreddit.new(limit=20):
-        if(submission.created_utc <= recordsBook.last_post_time): #We only want to process posts that were created after the last time we ran the bot
+        if(submission.created_utc <= recordsBook.last_post_time): # We only want to process posts that were created after the last time we ran the bot
             break
         print("Processing post with title: ", submission.title)
         post_values = {
@@ -36,11 +36,11 @@ def lambda_handler(event, context):
             "Question In Self Text": 0,
             "Tagged As Ace": 0
         }
-        if(("ace" or "hole in one") in submission.title.lower() and ("place" or "race" not in submission.title.lower())): #Since the string "ace" is in the common words "place" and "race" I decided just to throw them out. This isn't perfect, but it will work for our purposes
+        if(("ace" or "hole in one") in submission.title.lower()):
             print("Title contains ace")
             post_values["Ace In Title"] = 1
 
-        if(("ace" or "hole in one") in submission.selftext.lower() and ("place" or "race" not in submission.title.lower())):
+        if(("ace" or "hole in one") in submission.selftext.lower()):
             print("Text contains ace")
             post_values["Ace In Self Text"] = 1
 
@@ -65,8 +65,8 @@ def lambda_handler(event, context):
             recordsBook.add_message(f"Found ace post! Replied to post with title: {submission.title} on {datetime.datetime.now()}")
         recordsBook.add_post_to_data(category)
 
-    for submission in subreddit.new(limit=1): #After processing all the posts, we want to update the last post time to the most recent post
-        #We have a small chance of missing a post if it was made while the program was in the previous loop, but that is fine for my purposes
+    for submission in subreddit.new(limit=1): # After processing all the posts, we want to update the last post time to the most recent post
+        # We have a tiny chance of missing a post if it was made while the program was in the previous loop, but that is fine for my purposes
         recordsBook.set_last_post_time(submission.created_utc)
 
     for reply in reddit.inbox.unread():
